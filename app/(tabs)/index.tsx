@@ -72,7 +72,7 @@ export default function Dashboard() {
   const handleResetData = () => {
     Alert.alert(
       "🚨 Reset All Data",
-      "Are you sure you want to delete ALL your treasure data? This action cannot be undone!",
+      "Are you sure you want to delete ALL your treasure data? This will clear all categories, expenses, and deposits across the entire app. This action cannot be undone!",
       [
         {
           text: "Cancel",
@@ -83,14 +83,22 @@ export default function Dashboard() {
           style: "destructive",
           onPress: async () => {
             try {
+              // Clear all data from storage
               await storage.multiRemove(['categories', 'expenses', 'deposits']);
+              
+              // Reset all local state
               setCategories([]);
               setExpenses([]);
               setDeposits([]);
               setTotalBalance(0);
               setTotalDeposits(0);
               setTotalExpenses(0);
-              Alert.alert("✅ Success", "All data has been cleared!");
+              
+              Alert.alert(
+                "✅ Success", 
+                "All data has been cleared! The changes will reflect across all screens.",
+                [{ text: "OK" }]
+              );
             } catch (error) {
               console.error("Error resetting data:", error);
               Alert.alert("❌ Error", "Failed to reset data. Please try again.");
@@ -120,7 +128,7 @@ export default function Dashboard() {
       timeline[date] = (timeline[date] || 0) + exp.amount;
     });
 
-    // get the number of days in the current month
+    // Get the number of days in the current month
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
@@ -128,7 +136,7 @@ export default function Dashboard() {
 
     const sorted = Object.entries(timeline)
       .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-      .slice(-daysInMonth); //change to last n days of current month
+      .slice(-daysInMonth); // Show days based on current month
 
     if (sorted.length === 0) return [];
 
@@ -326,8 +334,8 @@ export default function Dashboard() {
       {/* Bar Chart */}
       <View style={styles.chartSection}>
         <View style={styles.chartHeader}>
-          <Text style={styles.chartTitle}>⚓ Adventure Log (Recent Days)</Text>
-          <Text style={styles.chartSubheading}>Your spending voyage timeline</Text>
+          <Text style={styles.chartTitle}>⚓ Adventure Log (This Month)</Text>
+          <Text style={styles.chartSubheading}>Your spending voyage timeline for the current month</Text>
         </View>
         {renderBarChart()}
       </View>
