@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, ScrollView, RefreshControl } from "react-native";
+import { Text, View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from "react-native";
 import { Link, useFocusEffect } from "expo-router";
 import { useState, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -68,6 +68,39 @@ export default function Dashboard() {
     setRefreshing(false);
   };
 
+  // --- Reset All Data ---
+  const handleResetData = () => {
+    Alert.alert(
+      "🚨 Reset All Data",
+      "Are you sure you want to delete ALL your treasure data? This action cannot be undone!",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Yes, Delete Everything",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await storage.multiRemove(['categories', 'expenses', 'deposits']);
+              setCategories([]);
+              setExpenses([]);
+              setDeposits([]);
+              setTotalBalance(0);
+              setTotalDeposits(0);
+              setTotalExpenses(0);
+              Alert.alert("✅ Success", "All data has been cleared!");
+            } catch (error) {
+              console.error("Error resetting data:", error);
+              Alert.alert("❌ Error", "Failed to reset data. Please try again.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   // --- Prepare Pie Chart Data ---
   const getPieData = () => {
     if (categories.length === 0) return [];
@@ -87,9 +120,15 @@ export default function Dashboard() {
       timeline[date] = (timeline[date] || 0) + exp.amount;
     });
 
+    // get the number of days in the current month
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
     const sorted = Object.entries(timeline)
       .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-      .slice(-7);
+      .slice(-daysInMonth); //change to last n days of current month
 
     if (sorted.length === 0) return [];
 
@@ -158,8 +197,7 @@ export default function Dashboard() {
     }
 
     const maxValue = Math.max(...barData.map(d => d.value));
-    // Calculate width based on number of data points (40px per bar + spacing)
-    const chartWidth = Math.max(280, barData.length * 45);
+    const chartWidth = Math.max(280, barData.length * 40);
 
     return (
       <View style={styles.barChartContainer}>
@@ -174,8 +212,8 @@ export default function Dashboard() {
               data={barData}
               width={chartWidth}
               height={200}
-              barWidth={28}
-              spacing={barData.length > 7 ? 12 : 15}
+              barWidth={24}
+              spacing={barData.length > 15 ? 8 : 12}
               roundedTop
               barBorderRadius={4}
               yAxisThickness={0}
@@ -184,11 +222,11 @@ export default function Dashboard() {
               hideRules
               frontColor={NAMI_PRIMARY}
               yAxisTextStyle={{ color: '#FF8C42', fontSize: 10, fontWeight: '600' }}
-              xAxisLabelTextStyle={{ color: '#95a5a6', fontSize: 9 }}
+              xAxisLabelTextStyle={{ color: '#95a5a6', fontSize: 8 }}
               noOfSections={4}
               maxValue={maxValue * 1.1}
               showValuesAsTopLabel
-              topLabelTextStyle={{ fontSize: 10, color: '#FF6B35', fontWeight: '700' }}
+              topLabelTextStyle={{ fontSize: 9, color: '#FF6B35', fontWeight: '700' }}
               scrollToEnd={true}
               scrollAnimation={true}
             />
@@ -220,12 +258,18 @@ export default function Dashboard() {
           <Text style={styles.headerSubtitle}>Navigator's Budget Dashboard</Text>
           <Text style={styles.headerSubtitle2}>- navigate your finance unlike my idiot captain!!!</Text>
         </View>
-        <Link href="/budget" style={styles.link}>
-          <View style={styles.linkButton}>
-            <Text style={styles.linkText}>Full Budget</Text>
-            <Ionicons name="arrow-forward" size={16} color="#fff" />
-          </View>
-        </Link>
+        <View style={styles.headerButtons}>
+          <Link href="/budget" style={styles.link}>
+            <View style={styles.linkButton}>
+              <Text style={styles.linkText}>Full Budget</Text>
+              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            </View>
+          </Link>
+          <TouchableOpacity onPress={handleResetData} style={styles.resetButton}>
+            <Ionicons name="trash-outline" size={16} color="#fff" />
+            <Text style={styles.resetText}>Reset Data</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Summary Cards */}
@@ -342,7 +386,7 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#FFF8F0', // Soft tangerine background
+    backgroundColor: '#FFF8F0',
   },
   header: {
     backgroundColor: NAMI_PRIMARY,
@@ -382,7 +426,11 @@ const styles = StyleSheet.create({
     opacity: 0.95,
     fontStyle: 'italic',
   },
-  link: { alignSelf: "flex-start" },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  link: { flex: 1 },
   linkButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -392,6 +440,23 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: '#fff',
+    justifyContent: 'center',
+  },
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 107, 53, 0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+    gap: 6,
+  },
+  resetText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
   },
   linkText: { 
     color: "#fff", 
@@ -501,11 +566,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontStyle: 'italic',
   },
-    barChartScroll: { 
+  barChartScroll: { 
     paddingHorizontal: 10,
     alignItems: 'center',
   },
-    scrollableChartWrapper: {
+  scrollableChartWrapper: {
     width: '100%',
     height: 230,
   },
