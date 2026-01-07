@@ -1,35 +1,33 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { HeaderTitle } from "@react-navigation/elements";
+import { Tabs } from "expo-router";
+import { Ionicons} from '@expo/vector-icons';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function TabsLayout() {
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
+        screenOptions={{ tabBarActiveTintColor: '#a45b0dff' }}>
+      <Tabs.Screen name="index" 
+        options={{headerTitle: "Dashboard",
+        tabBarLabel: 'Dashboard', 
+        tabBarIcon: ({focused}) => 
+                <Ionicons name={focused? "bar-chart" : "bar-chart-outline"} 
+                    size={24} color="#a45b0dff"></Ionicons>
+        }} />
+
+      <Tabs.Screen name="budget" 
+        options={{headerTitle: " Budget ",
+        tabBarLabel: 'Budget', 
+        tabBarIcon: ({focused}) => 
+                <Ionicons name={focused? "wallet" : "wallet-outline"} 
+                    size={24} color="#a45b0dff"></Ionicons>
+        }} />
+
+      <Tabs.Screen name="calculator" 
+        options={{headerTitle: "Calculator",
+            tabBarIcon: ({focused}) => 
+                <Ionicons name={focused? "calculator" : "calculator-outline"} 
+                    size={24} color="#a45b0dff"></Ionicons>
+         }} />
     </Tabs>
-  );
-}
+  );  
+};
